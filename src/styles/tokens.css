@@ -1,0 +1,142 @@
+/* Fuentes empaquetadas (la app funciona sin internet). Geist, SIL OFL: ver assets/fonts/LICENSE-geist.txt */
+@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url('../assets/fonts/geist-sans.woff2') format('woff2')}
+
+/*
+  Osmar — paleta tomada de la referencia Factory (DESIGN.md).
+  Colores de Factory usados directamente:
+    obsidiana #101010 · carbón #1d1a18 · trazo #3d3a39 · grafito #4d4947
+    granito cálido #8a8380 · piedra pálida #b8b3b0 · hueso #eeeeee · tiza #fafafa
+    naranja señal #ee6018 · verde métrica #a0ca92
+  Lo que Factory no define (error y advertencia, y los tonos del tema claro) está marcado en los comentarios.
+*/
+:root,
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --c-canvas:#101010;        /* fondo de página (obsidiana) */
+  --c-surface:#1d1a18;       /* tarjetas y paneles (carbón) */
+  --c-surface-2:#252220;     /* filas de cabecera, filas alternas (derivado) */
+  --c-tint:#2b2725;          /* fondos de chips, badges neutros (derivado) */
+  --c-line:#3d3a39;          /* separadores (trazo) */
+  --c-line-strong:#7a7471;   /* bordes de controles: 3:1 sobre canvas (corregido) */
+  --c-text:#f4e9dd;          /* texto principal (marfil cálido, derivado del logo) */
+  --c-text-2:#c9bfb6;        /* texto secundario (cálido, derivado del logo) */
+  --c-muted:#a39d9a;         /* texto de apoyo: granito cálido aclarado para ≥4.5:1 sobre superficies (derivado) */
+  --c-faint:#4d4947;         /* solo decoración, nunca texto */
+  --c-placeholder:#a39d9a;
+  --c-figure:#f4e9dd;        /* tarjeta clara: figura invertida (marfil del logo, tono propio) */
+  --c-figure-text:#101010;
+  --c-btn:#f4e9dd;           /* botón principal: relleno marfil */
+  --c-btn-text:#101010;
+  --c-btn-hover:#fff7ef;
+  --c-sidebar:#101010;
+  --c-sidebar-text:#f4e9dd;
+  --c-sidebar-lift:#1d1a18;  /* ítem activo de la barra lateral (carbón de Factory) */
+  --c-accent:#ea72a6;        /* rosa del logo, aclarado para contraste (6.8:1 sobre canvas) */
+  --c-accent-text:#ea72a6;
+  --c-ring:rgba(234,114,166,.38);
+  --c-neutral-bg:#2b2725;
+  --c-tbl-hover:#201d1b;
+  --c-ok:#a0ca92;            /* verde métrica */
+  --c-ok-bg:rgba(160,202,146,.12);
+  --c-ok-line:rgba(160,202,146,.35);
+  --c-warn:#d9a441;          /* advertencia: dorado del logo, aclarado (8.5:1 sobre canvas) */
+  --c-warn-bg:rgba(217,164,65,.12);
+  --c-warn-line:rgba(217,164,65,.42);
+  --c-bad:#e07a7a;           /* error: rojo sobrio (aprobado; Factory no define rojo) */
+  --c-bad-bg:rgba(224,122,122,.14);
+  --c-bad-line:rgba(224,122,122,.4);
+  --c-overlay:rgba(0,0,0,.7);
+  --c-on-accent:#101010;
+  --c-tint-a:#2b2725; --c-tint-b:#3d3a39;
+  --c-tint-1a:#262322; --c-tint-1b:#353130;
+  --c-tint-2a:#2a2a2a; --c-tint-2b:#3a3a3a;
+  --c-tint-3a:#2d2823; --c-tint-3b:#3f3731;
+  --c-tint-4a:#23262a; --c-tint-4b:#34383d;
+  --sh-sm:none;
+  --sh-md:0 12px 30px -12px rgba(0,0,0,.6);
+  --sh-lg:0 30px 70px -18px rgba(0,0,0,.75);
+  /* Radios: Factory usa 3px en controles, 10px en tarjetas, 20px en paneles grandes */
+  --r-sm:3px; --r-md:4px; --r-lg:10px; --r-xl:20px;
+  --font-ui:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-display:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif; /* mismo tipo que el resto: los números no cambian de familia */
+  /* Estados compatibles con el código existente */
+  --ok:var(--c-ok); --ok-bg:var(--c-ok-bg); --ok-line:var(--c-ok-line);
+  --warn:var(--c-warn); --warn-bg:var(--c-warn-bg); --warn-line:var(--c-warn-line);
+  --bad:var(--c-bad); --bad-bg:var(--c-bad-bg); --bad-line:var(--c-bad-line);
+}
+
+:root[data-theme="light"]{
+  color-scheme: light;
+  /* Tema claro: derivado de la referencia (Factory no tiene modo claro) */
+  --c-canvas:#efe6dc;
+  --c-surface:#fdf9f5;
+  --c-surface-2:#f7f1ea;
+  --c-tint:#e6ddd2;
+  --c-line:#d8cec3;
+  --c-line-strong:#7d7673;   /* bordes de controles: 3:1 sobre canvas (corregido) */
+  --c-text:#151111;
+  --c-text-2:#3b3333;
+  --c-muted:#5a4f4f;
+  --c-faint:#b3a8a8;
+  --c-placeholder:#6f6464;
+  --c-figure:#151111;
+  --c-figure-text:#f4e9dd;
+  --c-btn:#151111;
+  --c-btn-text:#fdf9f5;
+  --c-btn-hover:#3b3333;
+  --c-sidebar:#101010;
+  --c-sidebar-text:#f4e9dd;
+  --c-sidebar-lift:#1d1a18;
+  --c-accent:#c2396f;
+  --c-accent-text:#9c1d58;   /* magenta profundo para texto sobre claro (6.2:1 sobre canvas) */
+  --c-ring:rgba(194,57,111,.3);
+  --c-neutral-bg:#e6ddd2;
+  --c-tbl-hover:#f7f1ea;
+  --c-ok:#2f5a26;            /* verde métrica oscurecido para texto sobre claro (derivado) */
+  --c-ok-bg:rgba(160,202,146,.25);
+  --c-ok-line:rgba(47,90,38,.35);
+  --c-warn:#6e4f10;
+  --c-warn-bg:rgba(217,164,65,.22);
+  --c-warn-line:#d9a441;
+  --c-bad:#a3343b;           /* error: rojo sobrio para texto sobre claro (6.5:1) */
+  --c-bad-bg:#f4dcdc;
+  --c-bad-line:#e2a9ac;
+  --c-overlay:rgba(21,17,17,.55);
+  --c-on-accent:#fafafa;
+  --c-tint-a:#e4e2e1; --c-tint-b:#d6d3d1;
+  --c-tint-1a:#e7e5e4; --c-tint-1b:#d9d6d4;
+  --c-tint-2a:#e2e2e2; --c-tint-2b:#d4d4d4;
+  --c-tint-3a:#e6e3df; --c-tint-3b:#d8d3cc;
+  --c-tint-4a:#e1e3e6; --c-tint-4b:#d3d6da;
+  --sh-sm:none;
+  --sh-md:0 10px 28px -12px rgba(16,16,16,.2);
+  --sh-lg:0 30px 70px -18px rgba(16,16,16,.35);
+  --r-sm:3px; --r-md:4px; --r-lg:10px; --r-xl:20px;
+  --font-ui:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-display:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif; /* mismo tipo que el resto: los números no cambian de familia */
+  --ok:var(--c-ok); --ok-bg:var(--c-ok-bg); --ok-line:var(--c-ok-line);
+  --warn:var(--c-warn); --warn-bg:var(--c-warn-bg); --warn-line:var(--c-warn-line);
+  --bad:var(--c-bad); --bad-bg:var(--c-bad-bg); --bad-line:var(--c-bad-line);
+}
+
+html, body, #root, button, input, textarea, select, option {
+  font-family: var(--font-ui);
+}
+.numeric, .price, .amount, .total, .quantity, .stock, .currency, .table-number {
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Alias de nombres semánticos usados por los componentes (apuntan a la paleta Factory) */
+:root{
+  --canvas:var(--c-canvas); --surface:var(--c-surface); --line:var(--c-line); --line-strong:var(--c-line-strong);
+  --ink:var(--c-text); --ink-2:var(--c-text-2); --muted:var(--c-muted); --faint:var(--c-faint); --placeholder:var(--c-placeholder);
+  --neutral-bg:var(--c-neutral-bg); --tbl-hover:var(--c-tbl-hover); --overlay:var(--c-overlay); --ring:var(--c-ring);
+  --focus:var(--c-accent); --brand:var(--c-btn); --brand-hover:var(--c-btn-hover); --on-light:var(--c-text);
+  --warn-dot:var(--c-accent); --surface-2:var(--c-surface-2);
+  --tint-0a:var(--c-tint-a); --tint-0b:var(--c-tint-b); --tint-1a:var(--c-tint-1a); --tint-1b:var(--c-tint-1b);
+  --tint-2a:var(--c-tint-2a); --tint-2b:var(--c-tint-2b); --tint-3a:var(--c-tint-3a); --tint-3b:var(--c-tint-3b);
+  --tint-4a:var(--c-tint-4a); --tint-4b:var(--c-tint-4b);
+}

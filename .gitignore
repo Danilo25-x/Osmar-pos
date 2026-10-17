@@ -1,0 +1,24 @@
+# Dependencias y compilados
+node_modules/
+dist/
+dist-app/
+out/
+*.log
+
+# Datos locales (nunca al repositorio)
+*.db
+*.db-wal
+*.db-shm
+*.db.tmp
+product-images/
+backups/
+
+# Secretos y configuración local
+.env
+.env.*
+*.pem
+*.key
+
+# Temporales del sistema
+.DS_Store
+Thumbs.db
