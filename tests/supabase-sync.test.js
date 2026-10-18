@@ -21,9 +21,14 @@ function fakeImages(existingFiles) {
   }
 }
 
+// Simula SettingsService: la llave service_role se lee con getSecret(), igual que en la app real.
 function fakeSettingsService(overrides = {}) {
-  const base = { sync_enabled: '1', supabase_url: 'https://demo.supabase.co', supabase_anon_key: 'anon-key', ...overrides }
-  return { getAll: () => base }
+  const { serviceKey = 'service-key', ...rest } = overrides
+  const base = { sync_enabled: '1', supabase_url: 'https://demo.supabase.co', ...rest }
+  return {
+    getAll: () => ({ ...base }),
+    getSecret: (key) => (key === 'supabase_service_key' ? serviceKey : ''),
+  }
 }
 
 function fakeSupabaseClient(log) {
@@ -108,7 +113,7 @@ test('producto con stock > 0: sube la imagen y guarda su URL pública', async ()
 test('sin credenciales de Supabase configuradas, no intenta sincronizar', async () => {
   const db = fakeDb([], [])
   const sync = new SupabaseSync(db, {}, fakeImages({}))
-  const result = await sync.runSync(fakeSettingsService({ supabase_url: '', supabase_anon_key: '' }))
+  const result = await sync.runSync(fakeSettingsService({ supabase_url: '', serviceKey: '' }))
   assert.equal(result.ok, false)
   assert.equal(result.skipped, true)
 })

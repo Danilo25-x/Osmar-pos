@@ -1,6 +1,6 @@
 {
   "name": "osmar-pos",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "description": "Osmar - Sistema POS profesional para tienda",
   "main": "electron/main.js",

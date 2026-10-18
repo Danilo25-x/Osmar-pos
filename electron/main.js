@@ -21,39 +21,72 @@ const SettingsService = require('./settings/SettingsService')
 const SupabaseSync = require('./sync/SupabaseSync')
 const { autoUpdater } = require('electron-updater')
 
-const SYNC_INTERVAL_MS = 20 * 60 * 1000 // 20 minutos
+// Sincronización automática: 12:00 y 19:00, hora de Colombia (UTC-5, sin cambio de horario).
+const COLOMBIA_OFFSET_MS = -5 * 60 * 60 * 1000
+const SYNC_HOURS_COLOMBIA = [12, 19]
+const LAST_AUTO_SYNC_KEY = 'last_auto_sync_ms'
 let syncTimer = null
 
-// Carpeta de datos de la app: osmar-pos. La primera vez se COPIA (no se mueve) la base de datos
-// y las imágenes desde j97-pos; la carpeta anterior queda intacta como respaldo.
+// Horas de sincronización (en milisegundos UTC) para los días indicados respecto a hoy en Colombia.
+function syncSlots(fromMs, dayOffsets) {
+  const col = new Date(fromMs + COLOMBIA_OFFSET_MS)
+  const slots = []
+  for (const d of dayOffsets) {
+    for (const h of SYNC_HOURS_COLOMBIA) {
+      slots.push(Date.UTC(col.getUTCFullYear(), col.getUTCMonth(), col.getUTCDate() + d, h) - COLOMBIA_OFFSET_MS)
+    }
+  }
+  return slots
+}
+const nextSyncSlot = fromMs => Math.min(...syncSlots(fromMs, [0, 1]).filter(t => t > fromMs))
+const lastSyncSlot = fromMs => Math.max(...syncSlots(fromMs, [-1, 0]).filter(t => t <= fromMs))
+
+// Carpeta de datos de la app: osmar-pos. No copia nada por sí sola.
 function prepareUserData() {
-  const appData   = app.getPath('appData')
-  const legacyDir = path.join(appData, 'j97-pos')
-  const targetDir = path.join(appData, 'osmar-pos')
-  app.setPath('userData', targetDir)
+  app.setPath('userData', path.join(app.getPath('appData'), 'osmar-pos'))
+}
+prepareUserData()
+
+// Copia la base y las imágenes de una instalación anterior (J97). La carpeta anterior no se toca.
+function copyLegacyData(legacyDir) {
+  const targetDir = app.getPath('userData')
   try {
-    const legacyDb = path.join(legacyDir, 'pos-ropa.db')
-    const targetDb = path.join(targetDir, 'pos-ropa.db')
-    if (fs.existsSync(targetDb) || !fs.existsSync(legacyDb)) return
     fs.mkdirSync(targetDir, { recursive: true })
     const legacyImages = path.join(legacyDir, 'product-images')
     if (fs.existsSync(legacyImages)) {
       fs.cpSync(legacyImages, path.join(targetDir, 'product-images'), { recursive: true })
     }
-    // La base se copia a un temporal y luego se renombra: si algo falla, no queda una base a medias.
+    const targetDb = path.join(targetDir, 'pos-ropa.db')
     const tmp = `${targetDb}.tmp`
-    fs.copyFileSync(legacyDb, tmp)
+    fs.copyFileSync(path.join(legacyDir, 'pos-ropa.db'), tmp)
     for (const suffix of ['-wal', '-shm']) {
       const src = path.join(legacyDir, `pos-ropa.db${suffix}`)
       if (fs.existsSync(src)) fs.copyFileSync(src, path.join(targetDir, `pos-ropa.db${suffix}`))
     }
     fs.renameSync(tmp, targetDb)
-    console.log('[Datos] Datos copiados desde j97-pos a osmar-pos')
+    console.log('[Datos] Datos importados desde la instalación anterior')
   } catch (error) {
-    console.error('[Datos] No se pudieron copiar los datos anteriores:', error)
+    console.error('[Datos] No se pudieron importar los datos anteriores:', error)
   }
 }
-prepareUserData()
+
+// En el primer arranque, si existe una instalación anterior, pregunta antes de importar.
+// Sin respuesta afirmativa, Osmar empieza completamente limpia.
+async function maybeImportLegacyData() {
+  const legacyDir = path.join(app.getPath('appData'), 'j97-pos')
+  const targetDb  = path.join(app.getPath('userData'), 'pos-ropa.db')
+  if (fs.existsSync(targetDb) || !fs.existsSync(path.join(legacyDir, 'pos-ropa.db'))) return
+  const { response } = await dialog.showMessageBox({
+    type: 'question',
+    title: 'Osmar POS',
+    message: 'Se encontró una instalación anterior en este equipo.',
+    detail: '¿Quieres importar sus productos, ventas y clientes? Si eliges "Empezar limpia", Osmar inicia sin datos.',
+    buttons: ['Empezar limpia', 'Importar datos anteriores'],
+    defaultId: 0,
+    cancelId: 0,
+  })
+  if (response === 1) copyLegacyData(legacyDir)
+}
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -193,6 +226,7 @@ function createWindow() {
 }
 
 async function bootstrap() {
+  await maybeImportLegacyData()
   db = getDB(getDBPath())
   productImageService = new ProductImageService(app)
   const bootstrapAdmin = await seedDemoData(db)
@@ -225,11 +259,28 @@ async function bootstrap() {
   const sync = new SupabaseSync(db, app, productImageService)
   registerSyncHandlers(ipcMain, authService, sync, settingsService)
 
-  const runBackgroundSync = () => {
-    sync.runSync(settingsService).catch(e => console.error('[Sync] Error inesperado:', e.message))
+  const lastOk = () => Number(db.get('SELECT value FROM settings WHERE key = ?', [LAST_AUTO_SYNC_KEY])?.value || 0)
+  const markOk = () => db.run(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`,
+    [LAST_AUTO_SYNC_KEY, String(Date.now())]
+  )
+  const scheduleNextSync = () => {
+    clearTimeout(syncTimer)
+    syncTimer = setTimeout(runScheduledSync, nextSyncSlot(Date.now()) - Date.now())
   }
-  runBackgroundSync()
-  syncTimer = setInterval(runBackgroundSync, SYNC_INTERVAL_MS)
+  async function runScheduledSync() {
+    try {
+      const result = await sync.runSync(settingsService)
+      if (result?.ok && !result.skipped && !(result.errors?.length)) markOk()
+    } catch (e) {
+      console.error('[Sync] Error inesperado:', e.message)
+    }
+    scheduleNextSync()
+  }
+  // Si la app estaba cerrada en un horario de sincronización, se sincroniza una vez al abrir.
+  if (lastOk() < lastSyncSlot(Date.now())) runScheduledSync()
+  else scheduleNextSync()
 
   console.log('[App] Bootstrap OK')
 }
@@ -284,6 +335,6 @@ app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => {
-  if (syncTimer) { clearInterval(syncTimer); syncTimer = null }
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null }
   if (process.platform !== 'darwin') { db?.close(); app.quit() }
 })
